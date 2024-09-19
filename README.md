@@ -22,7 +22,7 @@ brain_model/
     ├── test_network.py        # Tests unitaires pour le réseau neuronal
     ├── ...
 
-
+https://chatgpt.com/c/66eb92ab-e1b4-8004-bc7f-59db75f978b0?model=o1-preview
 
 def inject_knowledge(self, text):
     """

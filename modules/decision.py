@@ -32,3 +32,12 @@ class DecisionModule:
         self.D_t += dD
         
         # Vérifier si le seuil de décision est atteint
+                if abs(self.D_t) >= self.threshold:
+            self.choice_made = True
+            self.decision = "Action positive" if self.D_t > 0 else "Action négative"
+
+    def reset(self):
+        """Réinitialise la variable d'accumulation d'évidence après qu'une décision a été prise."""
+        self.D_t = 0.0
+        self.choice_made = False
+        self.decision = None

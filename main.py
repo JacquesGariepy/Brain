@@ -133,3 +133,30 @@ class Brain:
         Charge l'état précédent du cerveau, y compris la mémoire à long terme.
         """
         self.memory_module.load_long_term_memory()
+
+def main():
+    """
+    Fonction principale pour démontrer l'utilisation de la classe Brain et l'interaction entre les modules.
+    """
+    brain = Brain()
+
+    # Exemple d'utilisation : perception et traitement des stimuli sensoriels
+    sensory_input = [0.5 for _ in range(10)]  # Stimuli sensoriels simulés
+    brain.perceive_and_process(sensory_input, dt=1.0)
+
+    # Exemple d'utilisation : injection de connaissances
+    knowledge = "L'intelligence artificielle est une discipline en pleine expansion."
+    brain.inject_knowledge(knowledge)
+
+    # Exemple d'utilisation : communication
+    brain.communicate()
+
+    # Exemple d'utilisation : apprentissage
+    brain.learn()
+
+    # Sauvegarde et chargement de l'état du cerveau
+    brain.save_state()
+    brain.load_state()
+
+if __name__ == "__main__":
+    main()

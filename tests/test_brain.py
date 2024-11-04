@@ -40,3 +40,28 @@ class TestBrain(unittest.TestCase):
         knowledge = "L'apprentissage automatique est une branche de l'intelligence artificielle."
         self.brain.inject_knowledge(knowledge)
         self.assertIn("apprentissage", self.brain.language_module.vocabulary)
+
+    def test_use_case_interaction(self):
+        """Teste le nouveau cas d'utilisation démontrant l'interaction entre les modules."""
+        # Exemple d'utilisation : perception et traitement des stimuli sensoriels
+        sensory_input = [0.5 for _ in range(10)]  # Stimuli sensoriels simulés
+        self.brain.perceive_and_process(sensory_input, dt=1.0)
+        self.assertGreaterEqual(len(self.brain.memory_module.retrieve_short_term()), 0)
+
+        # Exemple d'utilisation : injection de connaissances
+        knowledge = "L'intelligence artificielle est une discipline en pleine expansion."
+        self.brain.inject_knowledge(knowledge)
+        self.assertIn("intelligence", self.brain.language_module.vocabulary)
+
+        # Exemple d'utilisation : communication
+        self.brain.communicate()
+        self.assertTrue(len(self.brain.language_module.generate_sentence()) > 0)
+
+        # Exemple d'utilisation : apprentissage
+        self.brain.learn()
+        self.assertTrue(len(self.brain.memory_module.retrieve_long_term("vocabulary")) > 0)
+
+        # Sauvegarde et chargement de l'état du cerveau
+        self.brain.save_state()
+        self.brain.load_state()
+        self.assertGreaterEqual(len(self.brain.memory_module.retrieve_long_term("vocabulary")), 0)

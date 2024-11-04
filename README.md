@@ -22,23 +22,26 @@ brain_model/
     ├── test_network.py        # Tests unitaires pour le réseau neuronal
     ├── ...
 
-https://chatgpt.com/c/66eb92ab-e1b4-8004-bc7f-59db75f978b0?model=o1-preview
+## Example Agent
 
-def inject_knowledge(self, text):
-    """
-    Injecte des compétences ou des connaissances dans le cerveau via le module de langage.
-    
-    Args:
-        text (str): Texte à apprendre (par exemple, un texte sur une nouvelle compétence).
-    
-    Raises:
-        ValueError: Si le texte fourni est vide ou mal formé.
-    """
-    if not text or not isinstance(text, str):
-        raise ValueError("Le texte fourni pour l'injection de connaissances est invalide.")
-    
-    try:
-        self.language_module.learn_text(text)
-        print("Nouvelle compétence injectée dans le cerveau.")
-    except Exception as e:
-        print(f"Erreur lors de l'injection de connaissances : {str(e)}")
+An example agent has been created to demonstrate the functionality of the `Brain` class. The agent initializes a `Brain` instance, processes sensory input, makes decisions, learns new knowledge, and communicates.
+
+### Running the Example Agent
+
+To run the example agent, execute the following command:
+
+```bash
+python examples/agent_example.py
+```
+
+### Example Agent Functionality
+
+The example agent performs the following tasks:
+
+1. Initializes a `Brain` instance.
+2. Processes sensory input.
+3. Makes decisions based on the processed data.
+4. Learns new knowledge by injecting text.
+5. Communicates by generating a response to a prompt.
+
+The example agent demonstrates how to use the `Brain` class and its methods to create an intelligent agent capable of perceiving, learning, and making decisions.

@@ -29,3 +29,14 @@ class TestBrain(unittest.TestCase):
         self.brain.save_state()
         self.brain.load_state()
         self.assertGreaterEqual(len(self.brain.memory_module.retrieve_long_term("vocabulary")), 0)
+
+    def test_inject_knowledge_invalid_text(self):
+        """Teste que la méthode inject_knowledge lève une ValueError pour un texte invalide."""
+        with self.assertRaises(ValueError):
+            self.brain.inject_knowledge("")
+
+    def test_inject_knowledge_success(self):
+        """Teste l'injection réussie de connaissances."""
+        knowledge = "L'apprentissage automatique est une branche de l'intelligence artificielle."
+        self.brain.inject_knowledge(knowledge)
+        self.assertIn("apprentissage", self.brain.language_module.vocabulary)

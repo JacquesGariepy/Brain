@@ -41,3 +41,22 @@ class Brain:
             if module_name not in ['perception', 'language', 'reasoning']:
                 data = module.process(data)
         return data
+
+    def inject_knowledge(self, text):
+        """
+        Injecte des compétences ou des connaissances dans le cerveau via le module de langage.
+        
+        Args:
+            text (str): Texte à apprendre (par exemple, un texte sur une nouvelle compétence).
+        
+        Raises:
+            ValueError: Si le texte fourni est vide ou mal formé.
+        """
+        if not text or not isinstance(text, str):
+            raise ValueError("Le texte fourni pour l'injection de connaissances est invalide.")
+        
+        try:
+            self.modules['language'].learn_text(text)
+            print("Nouvelle compétence injectée dans le cerveau.")
+        except Exception as e:
+            print(f"Erreur lors de l'injection de connaissances : {str(e)}")

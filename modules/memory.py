@@ -71,6 +71,16 @@ class MemoryModule:
         except FileNotFoundError:
             self.long_term_memory = {}
 
+    def synaptic_plasticity(self, synapse):
+        """
+        Implémente la plasticité synaptique pour renforcer les connexions entre les neurones.
+        
+        Args:
+            synapse (Synapse): La synapse à renforcer.
+        """
+        synapse.weight += 0.05  # Exemple de renforcement
+        synapse.weight = min(synapse.weight, 1.0)  # Limite supérieure du poids
+
     def long_term_potentiation(self, synapse):
         """
         Implémente la potentialisation à long terme (LTP) pour renforcer les connexions synaptiques.
@@ -122,3 +132,34 @@ class MemoryModule:
         """
         self.long_term_memory["new_neurons"] = new_neurons
         self.save_long_term_memory()
+
+    def protein_synthesis(self, synapse):
+        """
+        Simule la synthèse protéique pour renforcer les connexions synaptiques.
+        
+        Args:
+            synapse (Synapse): La synapse à renforcer.
+        """
+        synapse.weight += 0.2  # Exemple de renforcement
+        synapse.weight = min(synapse.weight, 1.0)  # Limite supérieure du poids
+
+    def reconsolidation(self, data):
+        """
+        Simule la reconsolidation des souvenirs rappelés.
+        
+        Args:
+            data (any): Données à reconsolider.
+        """
+        modified_data = f"modified_{data}"
+        self.store_long_term("reconsolidated_memory", modified_data)
+
+    def emotional_labeling(self, data, emotion):
+        """
+        Simule l'étiquetage émotionnel des souvenirs.
+        
+        Args:
+            data (any): Données à étiqueter.
+            emotion (str): Émotion associée.
+        """
+        labeled_data = f"{data}_{emotion}"
+        self.store_long_term("emotional_memory", labeled_data)

@@ -70,3 +70,55 @@ class MemoryModule:
                 self.long_term_memory = json.load(f)
         except FileNotFoundError:
             self.long_term_memory = {}
+
+    def long_term_potentiation(self, synapse):
+        """
+        Implémente la potentialisation à long terme (LTP) pour renforcer les connexions synaptiques.
+        
+        Args:
+            synapse (Synapse): La synapse à renforcer.
+        """
+        synapse.weight += 0.1  # Exemple de renforcement
+        synapse.weight = min(synapse.weight, 1.0)  # Limite supérieure du poids
+
+    def hippocampal_involvement(self, data):
+        """
+        Simule l'implication de l'hippocampe dans la consolidation de la mémoire.
+        
+        Args:
+            data (any): Données à consolider.
+        """
+        self.store_short_term(data)
+        if len(self.short_term_memory) == self.short_term_memory.maxlen:
+            consolidated_data = " ".join(self.retrieve_short_term())
+            self.store_long_term("consolidated_memory", consolidated_data)
+            self.short_term_memory.clear()
+
+    def memory_consolidation(self):
+        """
+        Consolide les souvenirs de la mémoire à court terme à la mémoire à long terme.
+        """
+        for item in self.short_term_memory:
+            self.store_long_term(f"consolidated_{item}", item)
+        self.short_term_memory.clear()
+
+    def distributed_storage(self, data):
+        """
+        Stocke les souvenirs de manière distribuée dans différentes régions de la mémoire.
+        
+        Args:
+            data (any): Données à stocker.
+        """
+        regions = ["region_1", "region_2", "region_3"]
+        for region in regions:
+            self.store_long_term(f"{region}_{data}", data)
+
+    def neurogenesis(self, new_neurons):
+        """
+        Simule la neurogenèse en ajoutant de nouveaux neurones à la mémoire.
+        
+        Args:
+            new_neurons (list): Liste des nouveaux neurones à ajouter.
+        """
+        self.long_term_memory["new_neurons"] = new_neurons
+        self.save_long_term_memory()

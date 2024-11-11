@@ -1,5 +1,5 @@
 import unittest
-from main import Brain
+from core.brain import Brain
 
 class TestBrain(unittest.TestCase):
     def setUp(self):

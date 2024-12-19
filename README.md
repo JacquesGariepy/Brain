@@ -22,31 +22,36 @@ brain_model/
     ├── test_network.py        # Tests unitaires pour le réseau neuronal
     ├── ...
 ```
-## Mécanismes de la mémoire cérébrale
+```markdown
+**Brain Memory Mechanisms**  
+The brain's ability to store memories involves complex mechanisms that rely on the strengthening of neural connections and the activation of specific regions. Here is an overview of the key mechanisms of brain memory:  
 
-La capacité du cerveau à stocker des souvenirs implique des mécanismes complexes qui reposent sur le renforcement des connexions neuronales et l'activation de régions spécifiques. Voici un aperçu des principaux mécanismes de la mémoire cérébrale :
+**Synaptic Plasticity:**  
+The brain stores memories by strengthening the connections between neurons, a process known as synaptic plasticity. This involves changes in the structure and function of synapses, the junctions where neurons communicate.  
 
-* Plasticité synaptique : Le cerveau stocke les souvenirs en renforçant les connexions entre les neurones, un processus connu sous le nom de plasticité synaptique. Cela implique des changements dans la structure et la fonction des synapses, les jonctions où les neurones communiquent.
+**Long-Term Potentiation (LTP):**  
+This is a persistent strengthening of synapses based on recent patterns of activity, considered a primary cellular mechanism for learning and memory.  
 
-* Potentialisation à long terme (LTP) : Il s'agit d'un renforcement persistant des synapses basé sur des schémas récents d'activité, considéré comme un mécanisme cellulaire principal pour l'apprentissage et la mémoire.
+**Role of the Hippocampus:**  
+The hippocampus is crucial for consolidating information from short-term to long-term memory and plays a key role in spatial memory.  
 
-* Implication de l'hippocampe : L'hippocampe joue un rôle crucial dans la consolidation de l'information de la mémoire à court terme à la mémoire à long terme et dans la mémoire spatiale.
+**Memory Consolidation:**  
+This process involves stabilizing memory traces over time, transforming short-term memories into more stable long-term ones.  
 
-* Consolidation de la mémoire : Ce processus implique la stabilisation des traces mnésiques au fil du temps, transformant les souvenirs à court terme en souvenirs à long terme plus stables.
+**Distributed Storage:**  
+Unlike the concept of a single "memory center," memories are stored across distributed networks in the brain.  
 
-* Stockage distribué : Contrairement à l'idée d'un "centre de mémoire" unique, les souvenirs sont stockés à travers des réseaux distribués dans le cerveau.
+**Neurogenesis:**  
+The formation of new neurons in the hippocampus is believed to contribute to memory formation and cognitive flexibility.  
 
-* Neurogenèse : La formation de nouveaux neurones dans l'hippocampe est censée contribuer à la formation de la mémoire et à la flexibilité cognitive.
+**Protein Synthesis:**  
+The formation of long-term memories requires the synthesis of new proteins, which help strengthen synaptic connections.  
 
-* Synthèse protéique : La formation de souvenirs à long terme nécessite la synthèse de nouvelles protéines, qui aident à renforcer les connexions synaptiques.
+**Reconsolidation:**  
+When memories are recalled, they become temporarily malleable and can be modified before being re-stored, a process known as reconsolidation.  
 
-* Reconsolidation : Lorsque les souvenirs sont rappelés, ils deviennent temporairement labiles et peuvent être modifiés avant d'être re-stockés, un processus connu sous le nom de reconsolidation.
+**Emotional Tagging:**  
+The amygdala plays a role in attaching emotional significance to memories, influencing their strength and recall.  
 
-* Étiquetage émotionnel : L'amygdale joue un rôle dans l'attachement d'une signification émotionnelle aux souvenirs, influençant leur force et leur rappel.
-
-Comprendre ces mécanismes non seulement améliore notre connaissance du fonctionnement du cerveau, mais fournit également des cibles potentielles pour traiter les troubles liés à la mémoire et développer des stratégies d'amélioration cognitive.
-
-Citations :
-[1] How does the brain store memories? | Live Science https://www.livescience.com/how-the-brain-stores-memories
-[2] New Study Reveals Where Memory Fragments are Stored https://news.weill.cornell.edu/news/2022/07/new-study-reveals-where-memory-fragments-are-stored
-[3] The Neurobiology of Traumatic Memory | Dr. Arielle Schwartz https://drarielleschwartz.com/neurobiology-traumatic-memory-dr-arielle-schwartz/
+Understanding these mechanisms not only enhances our knowledge of brain function but also provides potential targets for treating memory-related disorders and developing strategies for cognitive improvement.
+```  

@@ -1,5 +1,5 @@
 # Brain
-
+```markdown
 brain_model/
 ├── main.py                    # Point d'entrée principal du programme
 ├── modules/
@@ -21,7 +21,7 @@ brain_model/
     ├── test_synapse.py        # Tests unitaires pour la classe Synapse
     ├── test_network.py        # Tests unitaires pour le réseau neuronal
     ├── ...
-
+```
 ## Mécanismes de la mémoire cérébrale
 
 La capacité du cerveau à stocker des souvenirs implique des mécanismes complexes qui reposent sur le renforcement des connexions neuronales et l'activation de régions spécifiques. Voici un aperçu des principaux mécanismes de la mémoire cérébrale :

@@ -18,13 +18,11 @@ References:
 - "AgentBench: Evaluating LLMs as Agents" (2023)
 """
 
-import torch
-import torch.nn as nn
 from typing import List, Dict, Any, Optional, Tuple, Callable
 from dataclasses import dataclass
 import time
 import json
-import numpy as np
+import random
 
 
 @dataclass
@@ -115,7 +113,7 @@ class HumanEvalBenchmark:
             num_samples=num_samples,
             correct=correct,
             failed=failed,
-            avg_time=np.mean(times),
+            avg_time=sum(times) / len(times) if times else 0.0,
             details={"pass@1": correct / num_samples}
         )
 
@@ -183,14 +181,14 @@ class MTBenchBenchmark:
             score = self._judge_response(history, question["category"])
             scores.append(score)
 
-        avg_score = np.mean(scores)
+        avg_score = sum(scores) / len(scores) if scores else 0.0
 
         # Category breakdown
         category_scores = {}
         for cat in self.CATEGORIES:
             cat_questions = [q for q in self.questions[:num_samples] if q["category"] == cat]
             if cat_questions:
-                category_scores[cat] = np.random.uniform(5, 10)  # Placeholder
+                category_scores[cat] = random.uniform(5, 10)  # Placeholder
 
         return BenchmarkResult(
             benchmark_name="MT-Bench",
@@ -205,7 +203,7 @@ class MTBenchBenchmark:
     def _judge_response(self, history: List[str], category: str) -> float:
         """Judge response quality (1-10 scale)"""
         # Would use LLM-as-a-judge
-        return np.random.uniform(5, 10)  # Placeholder
+        return random.uniform(5, 10)  # Placeholder
 
 
 class MATHBenchmark:
@@ -398,7 +396,8 @@ class ComprehensiveEvaluator:
             report.append(f"  {name:20s}: {result.score:.3f} ({result.correct}/{result.num_samples})")
 
         # Average
-        avg_score = np.mean([r.score for r in results.values()])
+        scores_list = [r.score for r in results.values()]
+        avg_score = sum(scores_list) / len(scores_list) if scores_list else 0.0
         report.append(f"\n  Average Score: {avg_score:.3f}")
 
         # Detailed breakdown
@@ -427,7 +426,7 @@ def test_benchmarks():
         return "42"
 
     def dummy_agent(goal: str, max_steps: int) -> bool:
-        return np.random.random() > 0.3
+        return random.random() > 0.3
 
     model_functions = {
         "HumanEval": dummy_code_gen,

@@ -86,8 +86,6 @@ class PythonSandbox:
     DANGEROUS_NODES = {
         ast.Import,
         ast.ImportFrom,
-        ast.Exec,
-        ast.Eval,
         ast.Call,  # Need to check function calls
     }
 
@@ -299,38 +297,42 @@ class JavaScriptSandbox:
         # Create temporary file for code
         with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as f:
             # Wrap code with sandbox
-            sandbox_code = f"""
+            # Escape backticks in code
+            escaped_code = code.replace('`', '\\`').replace('${', '\\${')
+            timeout_ms = int(self.config.max_execution_time * 1000)
+
+            sandbox_code = """
 const vm = require('vm');
 const util = require('util');
 
 // Restricted context
-const sandbox = {{
-    console: {{
+const sandbox = {
+    console: {
         log: (...args) => console.log(...args),
         error: (...args) => console.error(...args),
-    }},
+    },
     setTimeout: undefined,
     setInterval: undefined,
     require: undefined,
     process: undefined,
-}};
+};
 
-try {{
-    const script = new vm.Script(`{code.replace('`', '\\`')}`);
+try {
+    const script = new vm.Script(`""" + escaped_code + """`);
     const context = vm.createContext(sandbox);
 
-    const result = script.runInContext(context, {{
-        timeout: {int(self.config.max_execution_time * 1000)},
+    const result = script.runInContext(context, {
+        timeout: """ + str(timeout_ms) + """,
         displayErrors: true
-    }});
+    });
 
-    if (result !== undefined) {{
+    if (result !== undefined) {
         console.log('Result:', util.inspect(result));
-    }}
-}} catch (error) {{
+    }
+} catch (error) {
     console.error('Error:', error.message);
     process.exit(1);
-}}
+}
 """
             f.write(sandbox_code)
             temp_file = f.name

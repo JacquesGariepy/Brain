@@ -18,12 +18,15 @@ class Brain:
         self.modules: Dict[str, BrainModule] = {}
         self.load_core_modules()
         self.load_plugins()
+        # Initialize base components first
+        self.network = Network()
+        self.memory_module = MemoryModule()
+
+        # Then initialize dependent modules
         self.attention_module = AttentionModule([])
         self.decision_module = DecisionModule()
         self.emotion_module = EmotionModule()
         self.learning_module = LearningModule(self.network, self.memory_module)
-        self.memory_module = MemoryModule()
-        self.network = Network()
         self.neurons = []
         self.synapses = []
         self.create_neurons_and_synapses()
@@ -141,25 +144,6 @@ class Brain:
             str: Phrase générée.
         """
         return self.modules['language'].generate_sentence(prompt)
-
-    def inject_knowledge(self, text):
-        """
-        Injecte des compétences ou des connaissances dans le cerveau via le module de langage.
-        
-        Args:
-            text (str): Texte à apprendre (par exemple, un texte sur une nouvelle compétence).
-        
-        Raises:
-            ValueError: Si le texte fourni est vide ou mal formé.
-        """
-        if not text or not isinstance(text, str):
-            raise ValueError("Le texte fourni pour l'injection de connaissances est invalide.")
-        
-        try:
-            self.modules['language'].learn_text(text)
-            print("Nouvelle compétence injectée dans le cerveau.")
-        except Exception as e:
-            print(f"Erreur lors de l'injection de connaissances : {str(e)}")
 
     def save_state(self):
         """Sauvegarde l'état du cerveau."""

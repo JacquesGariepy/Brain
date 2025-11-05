@@ -712,33 +712,210 @@ class IntelligentOrchestrator(nn.Module):
         task_spec: TaskSpecification
     ) -> torch.Tensor:
         """Execute the selected architecture pipeline"""
-        # This would load and run the actual models
-        # Placeholder for now
         self.logger.info(f"Executing {selection.primary_architecture}")
         self.logger.info(f"Fusion strategy: {selection.fusion_strategy}")
 
-        # Return placeholder output
-        if task_spec.output_shape:
-            return torch.zeros(task_spec.output_shape)
-        return torch.zeros(1)
+        try:
+            # Load primary architecture
+            loader_func = f"_load_{selection.primary_architecture.lower().replace('-', '_')}"
+            if hasattr(self, loader_func):
+                model = getattr(self, loader_func)()
+                self.logger.info(f"Loaded {selection.primary_architecture}")
 
-    # === Architecture loading functions (placeholders) ===
-    def _load_transformer(self): pass
-    def _load_mamba(self): pass
-    def _load_vit(self): pass
-    def _load_swin(self): pass
-    def _load_clip(self): pass
-    def _load_blip2(self): pass
-    def _load_llava(self): pass
-    def _load_flamingo(self): pass
-    def _load_ntm(self): pass
-    def _load_dnc(self): pass
-    def _load_ppo(self): pass
-    def _load_sac(self): pass
-    def _load_diffusion(self): pass
-    def _load_cot(self): pass
-    def _load_tot(self): pass
-    def _load_gnn(self): pass
+                # Execute model
+                # Note: Actual execution depends on model interface
+                # For now, return zero output as placeholder until unified interface exists
+                if task_spec.output_shape:
+                    return torch.zeros(task_spec.output_shape)
+                return torch.zeros(1)
+            else:
+                self.logger.warning(f"No loader found for {selection.primary_architecture}")
+                # Return placeholder
+                if task_spec.output_shape:
+                    return torch.zeros(task_spec.output_shape)
+                return torch.zeros(1)
+
+        except Exception as e:
+            self.logger.error(f"Error executing pipeline: {e}")
+            # Return placeholder on error
+            if task_spec.output_shape:
+                return torch.zeros(task_spec.output_shape)
+            return torch.zeros(1)
+
+    # === Architecture loading functions ===
+
+    def _load_transformer(self):
+        """Load Transformer architecture"""
+        from architectures.transformers.transformer import Transformer, TransformerConfig
+        config = TransformerConfig(
+            vocab_size=50000,
+            d_model=512,
+            nhead=8,
+            num_layers=6,
+            dim_feedforward=2048,
+        )
+        return Transformer(config)
+
+    def _load_mamba(self):
+        """Load Mamba (Selective State Space Model) architecture"""
+        from architectures.state_space.mamba import Mamba, MambaConfig
+        config = MambaConfig(
+            d_model=768,
+            n_layers=24,
+            vocab_size=50000,
+        )
+        return Mamba(config)
+
+    def _load_vit(self):
+        """Load Vision Transformer architecture"""
+        from architectures.vision.vision_transformer import VisionTransformer, ViTConfig
+        config = ViTConfig(
+            image_size=224,
+            patch_size=16,
+            num_classes=1000,
+            dim=768,
+            depth=12,
+            heads=12,
+        )
+        return VisionTransformer(config)
+
+    def _load_swin(self):
+        """Load Swin Transformer architecture"""
+        from architectures.vision.swin_transformer import SwinTransformer
+        return SwinTransformer(
+            img_size=224,
+            patch_size=4,
+            in_chans=3,
+            num_classes=1000,
+            embed_dim=96,
+            depths=[2, 2, 6, 2],
+            num_heads=[3, 6, 12, 24],
+        )
+
+    def _load_clip(self):
+        """Load CLIP (Contrastive Language-Image Pre-training) architecture"""
+        from architectures.multimodal.clip import CLIPModel
+        return CLIPModel(
+            image_size=224,
+            patch_size=16,
+            hidden_size=512,
+            num_heads=8,
+            num_layers=12,
+            vocab_size=49408,
+            max_text_length=77,
+        )
+
+    def _load_blip2(self):
+        """Load BLIP-2 architecture"""
+        from architectures.multimodal.blip2 import BLIP2
+        return BLIP2(
+            vision_model='vit',
+            image_size=224,
+            llm_model='opt-2.7b',
+            num_query_tokens=32,
+        )
+
+    def _load_llava(self):
+        """Load LLaVA architecture"""
+        from architectures.multimodal.llava import LLaVA
+        return LLaVA(
+            vision_model='clip-vit-large',
+            llm_model='vicuna-7b',
+            mm_projector_type='linear',
+        )
+
+    def _load_flamingo(self):
+        """Load Flamingo architecture"""
+        from architectures.multimodal.flamingo import Flamingo
+        return Flamingo(
+            vision_encoder='clip-vit',
+            language_model='chinchilla-7b',
+            num_perceiver_layers=6,
+        )
+
+    def _load_ntm(self):
+        """Load Neural Turing Machine architecture"""
+        from architectures.memory.neural_memory import NeuralTuringMachine
+        return NeuralTuringMachine(
+            input_size=128,
+            output_size=128,
+            hidden_size=256,
+            memory_size=128,
+            memory_dim=64,
+        )
+
+    def _load_dnc(self):
+        """Load Differentiable Neural Computer architecture"""
+        from architectures.memory.neural_memory import DifferentiableNeuralComputer
+        return DifferentiableNeuralComputer(
+            input_size=128,
+            output_size=128,
+            hidden_size=256,
+            memory_size=256,
+            memory_dim=64,
+            num_read_heads=4,
+            num_write_heads=1,
+        )
+
+    def _load_ppo(self):
+        """Load PPO (Proximal Policy Optimization) agent"""
+        from architectures.rl.ppo import PPO, PPOConfig
+        config = PPOConfig(
+            state_dim=64,
+            action_dim=4,
+            hidden_dim=256,
+            lr_actor=3e-4,
+            lr_critic=1e-3,
+        )
+        return PPO(config)
+
+    def _load_sac(self):
+        """Load SAC (Soft Actor-Critic) agent"""
+        from architectures.rl.sac import SAC, SACConfig
+        config = SACConfig(
+            state_dim=64,
+            action_dim=4,
+            hidden_dim=256,
+            lr=3e-4,
+        )
+        return SAC(config)
+
+    def _load_diffusion(self):
+        """Load Diffusion Model architecture"""
+        from architectures.generative.diffusion import DiffusionModel, DiffusionConfig
+        config = DiffusionConfig(
+            image_size=256,
+            timesteps=1000,
+            model_channels=128,
+        )
+        return DiffusionModel(config)
+
+    def _load_cot(self):
+        """Load Chain-of-Thought reasoning"""
+        from architectures.reasoning.chain_of_thought import ChainOfThought
+        return ChainOfThought(
+            model_name='gpt-3.5-turbo',
+            max_steps=5,
+        )
+
+    def _load_tot(self):
+        """Load Tree-of-Thoughts reasoning"""
+        from architectures.reasoning.tree_of_thoughts import TreeOfThoughts
+        return TreeOfThoughts(
+            model_name='gpt-3.5-turbo',
+            search_strategy='bfs',
+            max_depth=3,
+        )
+
+    def _load_gnn(self):
+        """Load Graph Neural Network architecture"""
+        from architectures.graph.graph_networks import GraphNeuralNetwork
+        return GraphNeuralNetwork(
+            in_channels=64,
+            hidden_channels=128,
+            out_channels=32,
+            num_layers=3,
+        )
 
 
 # Example usage

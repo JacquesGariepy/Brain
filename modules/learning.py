@@ -58,7 +58,7 @@ class LearningModule:
             synapse.weight += delta_w
             synapse.weight = np.clip(synapse.weight, 0.0, 1.0)
 
-        def unsupervised_learning(self, inputs, num_clusters=3):
+    def unsupervised_learning(self, inputs, num_clusters=3):
         """
         Effectue un apprentissage non supervisé basé sur le regroupement des neurones en clusters.
         

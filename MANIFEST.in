@@ -1,0 +1,53 @@
+# Brain Framework - Package Manifest
+
+# Include documentation
+include README.md
+include README_SOTA.md
+include README_AGI.md
+include LICENSE
+include USAGE_GUIDE.md
+include TESTING.md
+
+# Include requirements
+include requirements.txt
+
+# Include configuration files
+include pyproject.toml
+include setup.py
+
+# Include all YAML and JSON config files
+recursive-include config *.yaml *.yml *.json
+recursive-include architectures *.yaml *.yml *.json
+
+# Include examples (but not their outputs)
+recursive-include examples *.py *.md
+recursive-exclude examples *.pyc __pycache__ *.pt *.pth
+
+# Include tests
+recursive-include tests *.py
+
+# Exclude build artifacts
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude *.so
+global-exclude *.egg-info
+global-exclude .git*
+global-exclude .DS_Store
+
+# Exclude logs and runs
+global-exclude *.log
+recursive-exclude runs *
+recursive-exclude logs *
+recursive-exclude mlruns *
+recursive-exclude wandb *
+
+# Exclude checkpoints and models
+recursive-exclude checkpoints *
+recursive-exclude models *.pt *.pth *.bin *.ckpt
+
+# Exclude data
+recursive-exclude data *
+
+# Exclude temporary and cache files
+global-exclude *~
+global-exclude .*.swp

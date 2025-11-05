@@ -1,0 +1,161 @@
+# Brain Framework - Docker Compose Configuration
+# Orchestrates Brain API, TensorBoard, and MLflow services
+
+version: '3.8'
+
+services:
+  # Brain API Service (GPU)
+  brain-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: brain-framework:latest
+    container_name: brain-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./checkpoints:/app/checkpoints
+      - ./logs:/app/logs
+      - ./runs:/app/runs
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - WANDB_API_KEY=${WANDB_API_KEY:-}
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - brain-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Brain API Service (CPU-only)
+  brain-api-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    image: brain-framework:cpu
+    container_name: brain-api-cpu
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./data:/app/data
+      - ./checkpoints:/app/checkpoints
+      - ./logs:/app/logs
+      - ./runs:/app/runs
+    environment:
+      - WANDB_API_KEY=${WANDB_API_KEY:-}
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    networks:
+      - brain-network
+    restart: unless-stopped
+    profiles:
+      - cpu
+
+  # TensorBoard Service
+  tensorboard:
+    image: tensorflow/tensorflow:latest
+    container_name: brain-tensorboard
+    ports:
+      - "6006:6006"
+    volumes:
+      - ./runs:/app/runs
+      - ./logs:/app/logs
+    command: tensorboard --logdir=/app/runs --host=0.0.0.0 --port=6006
+    networks:
+      - brain-network
+    restart: unless-stopped
+
+  # MLflow Tracking Server
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    container_name: brain-mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/mlflow/mlruns
+      - ./mlartifacts:/mlflow/mlartifacts
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri /mlflow/mlruns
+      --default-artifact-root /mlflow/mlartifacts
+    networks:
+      - brain-network
+    restart: unless-stopped
+
+  # PostgreSQL for MLflow (optional)
+  postgres:
+    image: postgres:15
+    container_name: brain-postgres
+    environment:
+      - POSTGRES_USER=mlflow
+      - POSTGRES_PASSWORD=mlflow
+      - POSTGRES_DB=mlflow
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - brain-network
+    restart: unless-stopped
+    profiles:
+      - production
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: brain-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - brain-network
+    restart: unless-stopped
+    profiles:
+      - production
+
+  # Jupyter Notebook Server
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: brain-framework:latest
+    container_name: brain-jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./:/app
+      - ./data:/app/data
+      - ./notebooks:/app/notebooks
+    command: >
+      jupyter notebook
+      --ip=0.0.0.0
+      --port=8888
+      --no-browser
+      --allow-root
+      --NotebookApp.token=''
+      --NotebookApp.password=''
+    networks:
+      - brain-network
+    restart: unless-stopped
+    profiles:
+      - dev
+
+networks:
+  brain-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:

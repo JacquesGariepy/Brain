@@ -185,6 +185,51 @@ class IntelligentOrchestrator(nn.Module):
             'load_fn': self._load_swin
         }
 
+        self.architecture_registry['yolov8'] = {
+            'type': 'vision',
+            'modalities': [ModalityType.IMAGE],
+            'tasks': [
+                TaskType.OBJECT_DETECTION
+            ],
+            'advantages': ['real_time', 'anchor_free', 'efficient'],
+            'capabilities': ['multiple_scales', 'decoupled_head'],
+            'load_fn': self._load_yolov8
+        }
+
+        self.architecture_registry['detr'] = {
+            'type': 'vision',
+            'modalities': [ModalityType.IMAGE],
+            'tasks': [
+                TaskType.OBJECT_DETECTION
+            ],
+            'advantages': ['end_to_end', 'no_nms', 'transformer_based'],
+            'capabilities': ['set_prediction', 'bipartite_matching'],
+            'load_fn': self._load_detr
+        }
+
+        self.architecture_registry['sam'] = {
+            'type': 'vision',
+            'modalities': [ModalityType.IMAGE],
+            'tasks': [
+                TaskType.SEMANTIC_SEGMENTATION
+            ],
+            'advantages': ['promptable', 'zero_shot', 'any_object'],
+            'capabilities': ['point_prompt', 'box_prompt', 'mask_prompt'],
+            'load_fn': self._load_sam
+        }
+
+        self.architecture_registry['dinov2'] = {
+            'type': 'vision',
+            'modalities': [ModalityType.IMAGE],
+            'tasks': [
+                TaskType.IMAGE_CLASSIFICATION,
+                TaskType.FEW_SHOT_LEARNING
+            ],
+            'advantages': ['self_supervised', 'strong_features', 'transfer_learning'],
+            'capabilities': ['student_teacher', 'multi_crop'],
+            'load_fn': self._load_dinov2
+        }
+
         # === MULTIMODAL MODELS ===
         self.architecture_registry['clip'] = {
             'type': 'multimodal',
@@ -230,6 +275,98 @@ class IntelligentOrchestrator(nn.Module):
             ],
             'capabilities': ['few_shot', 'interleaved_sequences'],
             'load_fn': self._load_flamingo
+        }
+
+        # === AUDIO MODELS ===
+        self.architecture_registry['whisper'] = {
+            'type': 'audio',
+            'modalities': [ModalityType.AUDIO],
+            'tasks': [
+                TaskType.SPEECH_RECOGNITION
+            ],
+            'advantages': ['multilingual', 'robust', 'zero_shot'],
+            'capabilities': ['99_languages', 'transcription', 'translation'],
+            'load_fn': self._load_whisper
+        }
+
+        self.architecture_registry['encodec'] = {
+            'type': 'audio',
+            'modalities': [ModalityType.AUDIO],
+            'tasks': [
+                TaskType.AUDIO_GENERATION
+            ],
+            'advantages': ['neural_codec', 'high_quality', 'efficient'],
+            'capabilities': ['residual_vq', 'compression'],
+            'load_fn': self._load_encodec
+        }
+
+        self.architecture_registry['musicgen'] = {
+            'type': 'audio',
+            'modalities': [ModalityType.AUDIO, ModalityType.TEXT],
+            'tasks': [
+                TaskType.AUDIO_GENERATION
+            ],
+            'advantages': ['text_to_music', 'controllable'],
+            'capabilities': ['conditional_generation', 'long_form'],
+            'load_fn': self._load_musicgen
+        }
+
+        self.architecture_registry['wav2vec2'] = {
+            'type': 'audio',
+            'modalities': [ModalityType.AUDIO],
+            'tasks': [
+                TaskType.SPEECH_RECOGNITION,
+                TaskType.AUDIO_CLASSIFICATION
+            ],
+            'advantages': ['self_supervised', 'pre_training'],
+            'capabilities': ['contrastive_learning', 'quantization'],
+            'load_fn': self._load_wav2vec2
+        }
+
+        # === TIME SERIES MODELS ===
+        self.architecture_registry['nbeats'] = {
+            'type': 'time_series',
+            'modalities': [ModalityType.TABULAR],
+            'tasks': [
+                TaskType.CONTINUAL_LEARNING  # Using as proxy for forecasting
+            ],
+            'advantages': ['interpretable', 'trend_decomposition', 'no_feature_engineering'],
+            'capabilities': ['trend', 'seasonality', 'residual_stacking'],
+            'load_fn': self._load_nbeats
+        }
+
+        self.architecture_registry['tft'] = {
+            'type': 'time_series',
+            'modalities': [ModalityType.TABULAR],
+            'tasks': [
+                TaskType.CONTINUAL_LEARNING  # Using as proxy for forecasting
+            ],
+            'advantages': ['multi_horizon', 'variable_selection', 'interpretable'],
+            'capabilities': ['attention', 'quantile_forecasting', 'static_covariates'],
+            'load_fn': self._load_tft
+        }
+
+        self.architecture_registry['patchtst'] = {
+            'type': 'time_series',
+            'modalities': [ModalityType.TABULAR],
+            'tasks': [
+                TaskType.CONTINUAL_LEARNING  # Using as proxy for forecasting
+            ],
+            'advantages': ['patch_based', 'efficient', 'channel_independence'],
+            'capabilities': ['transformer', 'long_sequences', 'pre_training'],
+            'load_fn': self._load_patchtst
+        }
+
+        # === META-LEARNING ===
+        self.architecture_registry['maml'] = {
+            'type': 'meta_learning',
+            'modalities': 'any',
+            'tasks': [
+                TaskType.FEW_SHOT_LEARNING
+            ],
+            'advantages': ['model_agnostic', 'fast_adaptation'],
+            'capabilities': ['inner_outer_loop', 'gradient_based'],
+            'load_fn': self._load_maml
         }
 
         # === MEMORY SYSTEMS ===

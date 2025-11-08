@@ -17,9 +17,11 @@ References:
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, Any
 from dataclasses import dataclass
 import math
+
+from ..base import MultimodalArchitecture, ModelOutput
 
 
 @dataclass
@@ -310,7 +312,7 @@ class TextTransformerBlock(nn.Module):
         return x
 
 
-class CLIP(nn.Module):
+class CLIP(MultimodalArchitecture):
     """
     Complete CLIP model for vision-language learning.
 
@@ -320,11 +322,12 @@ class CLIP(nn.Module):
     - Image-text retrieval
     - Visual reasoning
     - Image captioning
+
+    Inherits from MultimodalArchitecture for unified Brain framework interface.
     """
 
     def __init__(self, config: CLIPConfig):
-        super().__init__()
-        self.config = config
+        super().__init__(config=config)
 
         # Vision and text encoders
         self.visual = CLIPVisionEncoder(config)
@@ -372,8 +375,9 @@ class CLIP(nn.Module):
         self,
         image: torch.Tensor,
         text: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        attention_mask: Optional[torch.Tensor] = None,
+        return_loss: bool = False
+    ) -> ModelOutput:
         """
         Forward pass computing image and text features plus logits.
 
@@ -381,18 +385,35 @@ class CLIP(nn.Module):
             image: Images (batch, 3, H, W)
             text: Text tokens (batch, seq_len)
             attention_mask: Text attention mask (batch, seq_len)
+            return_loss: Whether to compute contrastive loss
 
         Returns:
-            image_features: Image embeddings (batch, embed_dim)
-            text_features: Text embeddings (batch, embed_dim)
-            logit_scale: Temperature-scaled logits
+            ModelOutput with embeddings and optional loss
         """
         # Get embeddings
         image_features = self.encode_image(image)
         text_features = self.encode_text(text, attention_mask)
 
-        # Return features and logit scale
-        return image_features, text_features, self.logit_scale.exp()
+        # Compute similarity
+        logit_scale = self.logit_scale.exp()
+        logits_per_image = logit_scale * image_features @ text_features.T
+        logits_per_text = logits_per_image.T
+
+        # Compute loss if requested
+        loss = None
+        if return_loss or self.training:
+            loss, _ = self.compute_contrastive_loss(image, text, attention_mask)
+
+        return ModelOutput(
+            embeddings=torch.cat([image_features, text_features], dim=0),
+            loss=loss,
+            metadata={
+                "image_embeds": image_features,
+                "text_embeds": text_features,
+                "logit_scale": logit_scale.item(),
+                "similarity": logits_per_image
+            }
+        )
 
     def compute_contrastive_loss(
         self,

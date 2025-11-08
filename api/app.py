@@ -39,6 +39,144 @@ JOBS = {}
 # Model registry (replace with actual model loading)
 MODELS_REGISTRY = {}
 
+# Model manager for loading and caching models
+class ModelManager:
+    """Manages model loading, caching, and inference"""
+
+    def __init__(self):
+        self.loaded_models = {}
+        self.orchestrator = None
+
+    def get_orchestrator(self):
+        """Lazy load orchestrator"""
+        if self.orchestrator is None:
+            try:
+                from core.orchestrator import BrainOrchestrator
+                self.orchestrator = BrainOrchestrator()
+            except Exception as e:
+                logger.error(f"Failed to load orchestrator: {e}")
+                raise
+        return self.orchestrator
+
+    def load_model(self, model_name: str, architecture: str = None):
+        """
+        Load a model by name or architecture.
+
+        Args:
+            model_name: Model identifier
+            architecture: Architecture type (e.g., 'transformer', 'vit', 'clip')
+
+        Returns:
+            Loaded model
+        """
+        # Check if already loaded
+        if model_name in self.loaded_models:
+            return self.loaded_models[model_name]
+
+        # Map common model names to architectures
+        architecture_map = {
+            'bert': 'transformer',
+            'gpt': 'transformer',
+            'transformer': 'transformer',
+            'vit': 'vit',
+            'vision-transformer': 'vit',
+            'clip': 'clip',
+            'resnet': 'resnet',
+        }
+
+        # Determine architecture
+        if architecture is None:
+            architecture = architecture_map.get(model_name.lower(), 'transformer')
+
+        # Load using orchestrator loaders
+        orchestrator = self.get_orchestrator()
+        loader_func = f"_load_{architecture.lower().replace('-', '_')}"
+
+        if not hasattr(orchestrator, loader_func):
+            raise ValueError(f"Unknown architecture: {architecture}")
+
+        model = getattr(orchestrator, loader_func)()
+
+        # Move to GPU if available
+        import torch
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = model.to(device)
+        model.eval()
+
+        # Cache model
+        self.loaded_models[model_name] = model
+
+        return model
+
+    def predict(self, model_name: str, inputs: dict, architecture: str = None):
+        """
+        Run inference with a model.
+
+        Args:
+            model_name: Model identifier
+            inputs: Input data (text, image, etc.)
+            architecture: Optional architecture type
+
+        Returns:
+            Prediction results
+        """
+        import torch
+
+        # Load model
+        model = self.load_model(model_name, architecture)
+
+        # Prepare inputs based on model type
+        from architectures.base import VisionArchitecture, LanguageArchitecture, MultimodalArchitecture
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        with torch.no_grad():
+            if isinstance(model, MultimodalArchitecture):
+                # Handle multimodal inputs (text + image)
+                model_inputs = {}
+
+                if 'image' in inputs:
+                    # TODO: Preprocess image
+                    model_inputs['image'] = inputs['image'].to(device)
+
+                if 'text' in inputs:
+                    # TODO: Tokenize text
+                    # For now, use random tokens as placeholder
+                    model_inputs['text'] = torch.randint(0, 50000, (1, 77)).to(device)
+
+                output = model(**model_inputs)
+
+            elif isinstance(model, VisionArchitecture):
+                # Handle image input
+                if 'image' in inputs:
+                    x = inputs['image'].to(device)
+                else:
+                    # Placeholder: random image
+                    x = torch.randn(1, 3, 224, 224).to(device)
+
+                output = model(x)
+
+            elif isinstance(model, LanguageArchitecture):
+                # Handle text input
+                if 'input_ids' in inputs:
+                    input_ids = inputs['input_ids'].to(device)
+                elif 'text' in inputs:
+                    # TODO: Tokenize text properly
+                    # For now, use random tokens as placeholder
+                    input_ids = torch.randint(0, 50000, (1, 128)).to(device)
+                else:
+                    input_ids = torch.randint(0, 50000, (1, 128)).to(device)
+
+                output = model(input_ids=input_ids)
+
+            else:
+                raise ValueError(f"Unknown model type: {type(model)}")
+
+        return output
+
+# Global model manager
+model_manager = ModelManager()
+
 
 def create_app() -> FastAPI:
     """
@@ -190,31 +328,74 @@ if FASTAPI_AVAILABLE:
         """
         start_time = time.time()
 
-        # Validate model exists
-        # if request.model_name not in MODELS_REGISTRY:
-        #     raise HTTPException(status_code=404, detail=f"Model {request.model_name} not found")
+        try:
+            # Prepare inputs
+            inputs = {}
+            if request.text:
+                inputs['text'] = request.text
+            if request.image:
+                inputs['image'] = request.image
+            if request.audio:
+                inputs['audio'] = request.audio
 
-        # In production, this would:
-        # 1. Load the model from registry
-        # 2. Preprocess inputs
-        # 3. Run inference
-        # 4. Postprocess outputs
+            # Run inference
+            output = model_manager.predict(
+                model_name=request.model_name,
+                inputs=inputs,
+                architecture=request.model_name.split('-')[0] if '-' in request.model_name else None
+            )
 
-        # Example response
-        prediction = {
-            "text": f"Generated response for: {request.text}",
-            "model": request.model_name,
-        }
+            # Extract predictions
+            if hasattr(output, 'predictions') and output.predictions is not None:
+                predictions = output.predictions
+            elif hasattr(output, 'logits') and output.logits is not None:
+                predictions = output.logits
+            elif hasattr(output, 'embeddings') and output.embeddings is not None:
+                predictions = output.embeddings
+            else:
+                predictions = None
 
-        latency_ms = (time.time() - start_time) * 1000
+            # Convert to JSON-serializable format
+            import torch
+            if predictions is not None and isinstance(predictions, torch.Tensor):
+                predictions_list = predictions.cpu().tolist()
+                # Get top prediction for classification
+                if len(predictions.shape) == 2:
+                    # Batch of logits
+                    top_pred = int(predictions[0].argmax().item())
+                    confidence = float(torch.softmax(predictions[0], dim=0).max().item())
+                else:
+                    top_pred = 0
+                    confidence = 0.0
 
-        return PredictionResponse(
-            prediction=prediction,
-            confidence=0.95,
-            latency_ms=latency_ms,
-            model_name=request.model_name,
-            metadata={"example": True},
-        )
+                prediction_result = {
+                    "class": top_pred,
+                    "logits": predictions_list if len(predictions_list) < 1000 else "too_large",
+                    "text": request.text if request.text else "N/A"
+                }
+            else:
+                prediction_result = {"text": "No output generated"}
+                confidence = 0.0
+
+            latency_ms = (time.time() - start_time) * 1000
+
+            # Get metadata
+            metadata = {}
+            if hasattr(output, 'metadata') and output.metadata:
+                metadata = output.metadata
+            metadata['architecture'] = type(model_manager.loaded_models.get(request.model_name)).__name__
+
+            return PredictionResponse(
+                prediction=prediction_result,
+                confidence=confidence,
+                latency_ms=latency_ms,
+                model_name=request.model_name,
+                metadata=metadata,
+            )
+
+        except Exception as e:
+            logger.error(f"Prediction error: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
     @app.post("/predict/batch", response_model=BatchPredictionResponse, tags=["Inference"])
     async def predict_batch(request: BatchPredictionRequest):

@@ -718,29 +718,114 @@ class IntelligentOrchestrator(nn.Module):
         try:
             # Load primary architecture
             loader_func = f"_load_{selection.primary_architecture.lower().replace('-', '_')}"
-            if hasattr(self, loader_func):
-                model = getattr(self, loader_func)()
-                self.logger.info(f"Loaded {selection.primary_architecture}")
-
-                # Execute model
-                # Note: Actual execution depends on model interface
-                # For now, return zero output as placeholder until unified interface exists
-                if task_spec.output_shape:
-                    return torch.zeros(task_spec.output_shape)
-                return torch.zeros(1)
-            else:
+            if not hasattr(self, loader_func):
                 self.logger.warning(f"No loader found for {selection.primary_architecture}")
                 # Return placeholder
                 if task_spec.output_shape:
                     return torch.zeros(task_spec.output_shape)
                 return torch.zeros(1)
 
+            model = getattr(self, loader_func)()
+            self.logger.info(f"Loaded {selection.primary_architecture}")
+
+            # Move model to appropriate device
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            model = model.to(device)
+            model.eval()  # Set to evaluation mode
+
+            # Execute model based on architecture type
+            from architectures.base import VisionArchitecture, LanguageArchitecture, MultimodalArchitecture
+
+            with torch.no_grad():
+                if isinstance(model, MultimodalArchitecture):
+                    # Multimodal models (CLIP, BLIP, etc.)
+                    output = self._execute_multimodal(model, inputs, device)
+                elif isinstance(model, VisionArchitecture):
+                    # Vision models (ViT, ResNet, etc.)
+                    output = self._execute_vision(model, inputs, device)
+                elif isinstance(model, LanguageArchitecture):
+                    # Language models (Transformer, GPT, BERT, etc.)
+                    output = self._execute_language(model, inputs, device)
+                else:
+                    # Generic BrainArchitecture
+                    output = self._execute_generic(model, inputs, device)
+
+            # Extract predictions from ModelOutput
+            if hasattr(output, 'predictions') and output.predictions is not None:
+                return output.predictions
+            elif hasattr(output, 'logits') and output.logits is not None:
+                return output.logits
+            elif hasattr(output, 'embeddings') and output.embeddings is not None:
+                return output.embeddings
+            else:
+                self.logger.warning("Model returned empty output")
+                if task_spec.output_shape:
+                    return torch.zeros(task_spec.output_shape)
+                return torch.zeros(1)
+
         except Exception as e:
-            self.logger.error(f"Error executing pipeline: {e}")
+            self.logger.error(f"Error executing pipeline: {e}", exc_info=True)
             # Return placeholder on error
             if task_spec.output_shape:
                 return torch.zeros(task_spec.output_shape)
             return torch.zeros(1)
+
+    def _execute_vision(self, model, inputs: Dict[str, torch.Tensor], device: str):
+        """Execute vision model"""
+        # Vision models expect 'image' or 'x' input
+        if 'image' in inputs:
+            x = inputs['image'].to(device)
+        elif 'x' in inputs:
+            x = inputs['x'].to(device)
+        elif 'pixel_values' in inputs:
+            x = inputs['pixel_values'].to(device)
+        else:
+            raise ValueError("Vision model requires 'image', 'x', or 'pixel_values' input")
+
+        return model(x)
+
+    def _execute_language(self, model, inputs: Dict[str, torch.Tensor], device: str):
+        """Execute language model"""
+        # Language models expect 'input_ids' and optionally 'attention_mask'
+        if 'input_ids' not in inputs:
+            raise ValueError("Language model requires 'input_ids' input")
+
+        input_ids = inputs['input_ids'].to(device)
+        attention_mask = inputs.get('attention_mask', None)
+        if attention_mask is not None:
+            attention_mask = attention_mask.to(device)
+
+        return model(input_ids=input_ids, attention_mask=attention_mask)
+
+    def _execute_multimodal(self, model, inputs: Dict[str, torch.Tensor], device: str):
+        """Execute multimodal model"""
+        # Multimodal models can take various combinations of inputs
+        model_inputs = {}
+
+        # Image inputs
+        if 'image' in inputs:
+            model_inputs['image'] = inputs['image'].to(device)
+        elif 'pixel_values' in inputs:
+            model_inputs['image'] = inputs['pixel_values'].to(device)
+
+        # Text inputs
+        if 'input_ids' in inputs:
+            model_inputs['text'] = inputs['input_ids'].to(device)
+        if 'attention_mask' in inputs:
+            model_inputs['attention_mask'] = inputs['attention_mask'].to(device)
+
+        # Audio inputs
+        if 'audio' in inputs:
+            model_inputs['audio'] = inputs['audio'].to(device)
+
+        return model(**model_inputs)
+
+    def _execute_generic(self, model, inputs: Dict[str, torch.Tensor], device: str):
+        """Execute generic model with inputs as kwargs"""
+        # Move all inputs to device
+        device_inputs = {k: v.to(device) if isinstance(v, torch.Tensor) else v
+                        for k, v in inputs.items()}
+        return model(**device_inputs)
 
     # === Architecture loading functions ===
 

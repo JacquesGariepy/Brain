@@ -17,9 +17,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
-from typing import Optional, Literal
+from typing import Optional, Literal, Tuple
 from dataclasses import dataclass
 
+from ..base import LanguageArchitecture, ModelOutput
 from .multihead_attention import MultiHeadAttention, AttentionConfig, GroupedQueryAttention
 
 
@@ -328,14 +329,15 @@ class TransformerBlock(nn.Module):
         return x
 
 
-class Transformer(nn.Module):
+class Transformer(LanguageArchitecture):
     """
     Complete State-of-the-Art Transformer model.
+
+    Inherits from LanguageArchitecture for unified Brain framework interface.
     """
 
     def __init__(self, config: TransformerConfig):
-        super().__init__()
-        self.config = config
+        super().__init__(config=config)
 
         # Token embeddings
         self.token_embedding = nn.Embedding(config.vocab_size, config.d_model)
@@ -383,17 +385,19 @@ class Transformer(nn.Module):
     def forward(
         self,
         input_ids: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None
-    ) -> torch.Tensor:
+        attention_mask: Optional[torch.Tensor] = None,
+        labels: Optional[torch.Tensor] = None
+    ) -> ModelOutput:
         """
         Forward pass of the Transformer.
 
         Args:
             input_ids: Input token IDs (batch_size, seq_len)
             attention_mask: Optional attention mask
+            labels: Optional labels for loss computation (batch_size, seq_len)
 
         Returns:
-            Logits of shape (batch_size, seq_len, vocab_size)
+            ModelOutput with logits and optional loss
         """
         batch_size, seq_len = input_ids.shape
 
@@ -424,7 +428,24 @@ class Transformer(nn.Module):
         # Project to vocabulary
         logits = self.lm_head(x)
 
-        return logits
+        # Compute loss if labels provided
+        loss = None
+        if labels is not None:
+            # Shift logits and labels for next token prediction
+            shift_logits = logits[..., :-1, :].contiguous()
+            shift_labels = labels[..., 1:].contiguous()
+            # Flatten for cross-entropy
+            loss = F.cross_entropy(
+                shift_logits.view(-1, shift_logits.size(-1)),
+                shift_labels.view(-1),
+                ignore_index=-100
+            )
+
+        return ModelOutput(
+            logits=logits,
+            loss=loss,
+            predictions=logits.argmax(dim=-1) if not self.training else None
+        )
 
     @torch.no_grad()
     def generate(

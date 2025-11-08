@@ -16,6 +16,8 @@ from typing import Optional, Tuple
 from dataclasses import dataclass
 import math
 
+from ..base import VisionArchitecture, ModelOutput
+
 
 @dataclass
 class ViTConfig:
@@ -140,7 +142,7 @@ class ViTBlock(nn.Module):
         return x
 
 
-class VisionTransformer(nn.Module):
+class VisionTransformer(VisionArchitecture):
     """
     Vision Transformer (ViT).
 
@@ -151,11 +153,12 @@ class VisionTransformer(nn.Module):
     - Pure transformer architecture
     - Classification token (CLS)
     - Position embeddings
+
+    Inherits from VisionArchitecture for unified Brain framework interface.
     """
 
     def __init__(self, config: ViTConfig):
-        super().__init__()
-        self.config = config
+        super().__init__(config=config)
 
         # Patch embedding
         self.patch_embed = PatchEmbedding(config)
@@ -218,15 +221,20 @@ class VisionTransformer(nn.Module):
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+        labels: Optional[torch.Tensor] = None
+    ) -> ModelOutput:
         """
         Forward pass.
 
         Args:
             x: Images (batch, channels, height, width)
+            labels: Optional labels for loss computation (batch,)
 
         Returns:
-            Class logits (batch, num_classes)
+            ModelOutput with logits and optional loss
         """
         batch_size = x.shape[0]
 
@@ -257,18 +265,29 @@ class VisionTransformer(nn.Module):
         if self.config.use_distillation:
             x_cls = x[:, 0]
             x_dist = x[:, 1]
-            x_cls = self.head(self.pre_logits(x_cls))
-            x_dist = self.head_dist(self.pre_logits(x_dist))
+            logits_cls = self.head(self.pre_logits(x_cls))
+            logits_dist = self.head_dist(self.pre_logits(x_dist))
+
             if self.training:
-                return x_cls, x_dist
+                logits = logits_cls  # Use primary head for loss
             else:
                 # Average predictions during inference
-                return (x_cls + x_dist) / 2
+                logits = (logits_cls + logits_dist) / 2
         else:
             x = x[:, 0] if self.config.use_cls_token else x.mean(dim=1)
             x = self.pre_logits(x)
-            x = self.head(x)
-            return x
+            logits = self.head(x)
+
+        # Compute loss if labels provided
+        loss = None
+        if labels is not None:
+            loss = F.cross_entropy(logits, labels)
+
+        return ModelOutput(
+            logits=logits,
+            loss=loss,
+            predictions=logits.argmax(dim=-1) if not self.training else None
+        )
 
 
 class SwinTransformerBlock(nn.Module):

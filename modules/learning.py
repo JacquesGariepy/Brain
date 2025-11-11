@@ -117,8 +117,9 @@ class LearningModule:
             self.network.update(dt=1.0)
 
         # Collecter les sorties (états de spike des neurones)
+        # IMPORTANT: Retourner seulement les sorties correspondant aux inputs
         outputs = []
-        for i in range(len(self.network.neurons)):
+        for i in range(num_inputs):  # Seulement les neurones d'entrée
             if self.network.neurons[i].spike:
                 outputs.append(1.0)
             else:

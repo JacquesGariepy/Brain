@@ -94,13 +94,15 @@ class MemoryModule:
     def hippocampal_involvement(self, data):
         """
         Simule l'implication de l'hippocampe dans la consolidation de la mémoire.
-        
+
         Args:
             data (any): Données à consolider.
         """
         self.store_short_term(data)
         if len(self.short_term_memory) == self.short_term_memory.maxlen:
-            consolidated_data = " ".join(self.retrieve_short_term())
+            # Convertir les données en strings avant de les joindre
+            short_term_items = self.retrieve_short_term()
+            consolidated_data = " | ".join(str(item) for item in short_term_items)
             self.store_long_term("consolidated_memory", consolidated_data)
             self.short_term_memory.clear()
 

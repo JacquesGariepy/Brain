@@ -1,3 +1,5 @@
+from .synapse import Synapse
+
 class Network:
     """
     Modèle du réseau neuronal, regroupant les neurones et les synapses.

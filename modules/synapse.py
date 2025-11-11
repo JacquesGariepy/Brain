@@ -119,8 +119,12 @@ class Synapse:
     
     def update_homeostatic_plasticity(self):
         """Ajuste le poids synaptique pour maintenir des taux de firing stables."""
-        # Pour simplifier, supposons que le taux est proportionnel à l'activité récente
-        rate = 1.0 / (self.last_post_spike_time - self.last_pre_spike_time + 1e-9)
+        # Vérifier que les neurones ont déjà spiké avant de calculer
+        if self.last_post_spike_time is None or self.last_pre_spike_time is None:
+            return  # Pas encore d'activité, pas de mise à jour
+
+        # Calculer le taux d'activité basé sur l'intervalle entre spikes
+        rate = 1.0 / (abs(self.last_post_spike_time - self.last_pre_spike_time) + 1e-9)
         delta_w = self.alpha * (self.target_rate - rate)
         self.weight += delta_w
         self.weight = np.clip(self.weight, 0.0, 1.0)

@@ -866,16 +866,33 @@ class IntelligentOrchestrator(nn.Module):
 
     def _load_swin(self):
         """Load Swin Transformer architecture"""
-        from architectures.vision.swin_transformer import SwinTransformer
-        return SwinTransformer(
-            img_size=224,
-            patch_size=4,
-            in_chans=3,
-            num_classes=1000,
-            embed_dim=96,
-            depths=[2, 2, 6, 2],
-            num_heads=[3, 6, 12, 24],
-        )
+        # Placeholder - Swin not implemented yet
+        from architectures.base import VisionArchitecture
+        return VisionArchitecture()  # Placeholder
+
+    def _load_yolov8(self):
+        """Load YOLOv8 architecture"""
+        # Placeholder - YOLOv8 not implemented yet
+        from architectures.base import VisionArchitecture
+        return VisionArchitecture()  # Placeholder
+
+    def _load_detr(self):
+        """Load DETR architecture"""
+        # Placeholder - DETR not implemented yet
+        from architectures.base import VisionArchitecture
+        return VisionArchitecture()  # Placeholder
+
+    def _load_sam(self):
+        """Load SAM (Segment Anything Model) architecture"""
+        # Placeholder - SAM not implemented yet
+        from architectures.base import VisionArchitecture
+        return VisionArchitecture()  # Placeholder
+
+    def _load_dinov2(self):
+        """Load DINOv2 architecture"""
+        # Placeholder - DINOv2 not implemented yet
+        from architectures.base import VisionArchitecture
+        return VisionArchitecture()  # Placeholder
 
     def _load_clip(self):
         """Load CLIP (Contrastive Language-Image Pre-training) architecture"""
@@ -1001,6 +1018,132 @@ class IntelligentOrchestrator(nn.Module):
             out_channels=32,
             num_layers=3,
         )
+
+    def _load_whisper(self):
+        """Load Whisper (Speech Recognition) architecture"""
+        from architectures.audio.whisper import Whisper, WhisperConfig
+        config = WhisperConfig(
+            n_mels=80,
+            n_audio_ctx=1500,
+            n_audio_state=384,
+            n_audio_head=6,
+            n_audio_layer=4,
+            n_vocab=51865,
+            n_text_ctx=448,
+            n_text_state=384,
+            n_text_head=6,
+            n_text_layer=4,
+        )
+        return Whisper(config)
+
+    def _load_encodec(self):
+        """Load Encodec (Neural Audio Codec) architecture"""
+        from architectures.audio.encodec import Encodec, EncodecConfig
+        config = EncodecConfig(
+            sample_rate=24000,
+            channels=1,
+            encoder_rates=[8, 5, 4, 2],
+            num_quantizers=8,
+            bandwidth=6.0
+        )
+        return Encodec(config)
+
+    def _load_musicgen(self):
+        """Load MusicGen (Text-to-Music) architecture"""
+        from architectures.audio.musicgen import MusicGen, MusicGenConfig
+        config = MusicGenConfig(
+            sample_rate=32000,
+            channels=2,
+            d_model=1024,
+            num_layers=24,
+            num_heads=16,
+            num_codebooks=4
+        )
+        return MusicGen(config)
+
+    def _load_wav2vec2(self):
+        """Load Wav2Vec2 (Self-Supervised Speech) architecture"""
+        from architectures.audio.wav2vec2 import Wav2Vec2, Wav2Vec2Config
+        config = Wav2Vec2Config(
+            d_model=768,
+            num_layers=12,
+            num_heads=12,
+            d_ff=3072,
+        )
+        return Wav2Vec2(config)
+
+    def _load_nbeats(self):
+        """Load N-BEATS (Time Series Forecasting) architecture"""
+        from architectures.time_series.nbeats import NBEATS, NBEATSConfig
+        config = NBEATSConfig(
+            backcast_length=10,
+            forecast_length=5,
+            stack_types=['trend', 'seasonality', 'generic'],
+            num_blocks_per_stack=3,
+            hidden_layer_units=256,
+            num_layers=4,
+        )
+        return NBEATS(config)
+
+    def _load_tft(self):
+        """Load TFT (Temporal Fusion Transformer) architecture"""
+        from architectures.time_series.tft import TemporalFusionTransformer, TFTConfig
+        config = TFTConfig(
+            static_input_size=4,
+            temporal_observed_size=3,
+            temporal_known_size=2,
+            target_size=1,
+            encoder_length=24,
+            decoder_length=12,
+            hidden_size=160,
+            num_heads=4,
+        )
+        return TemporalFusionTransformer(config)
+
+    def _load_patchtst(self):
+        """Load PatchTST (Patch Time Series Transformer) architecture"""
+        from architectures.time_series.patchtst import PatchTST, PatchTSTConfig
+        config = PatchTSTConfig(
+            num_variables=7,
+            seq_len=336,
+            pred_len=96,
+            patch_len=16,
+            stride=8,
+            d_model=128,
+            n_heads=8,
+            e_layers=3,
+        )
+        return PatchTST(config)
+
+    def _load_maml(self):
+        """Load MAML (Model-Agnostic Meta-Learning)"""
+        from architectures.meta_learning.maml import MAML, MAMLConfig
+        import torch.nn as nn
+
+        # Create a simple base model for MAML
+        class SimpleModel(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.net = nn.Sequential(
+                    nn.Linear(128, 256),
+                    nn.ReLU(),
+                    nn.Linear(256, 5)
+                )
+
+            def forward(self, x):
+                return self.net(x)
+
+        config = MAMLConfig(
+            inner_lr=0.01,
+            inner_steps=5,
+            outer_lr=0.001,
+            n_way=5,
+            k_shot=1,
+            q_query=15
+        )
+
+        base_model = SimpleModel()
+        return MAML(base_model, config)
 
 
 # Example usage

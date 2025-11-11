@@ -11,15 +11,22 @@ Demonstrates:
 import sys
 sys.path.insert(0, '..')
 
+from typing import Dict, List, Tuple, Optional, Any
+
 try:
     import torch
     import torch.nn as nn
-    from PIL import Image
-    import requests
-    from io import BytesIO
+    PIL_AVAILABLE = True
+    try:
+        from PIL import Image
+        import requests
+        from io import BytesIO
+    except ImportError:
+        PIL_AVAILABLE = False
+        print("Warning: PIL not available. Some image processing features will be skipped.")
 except ImportError as e:
     print(f"Missing dependency: {e}")
-    print("Install with: pip install torch Pillow requests")
+    print("Install with: pip install torch")
     sys.exit(1)
 
 
@@ -30,18 +37,23 @@ def example_clip():
     print("=" * 70)
 
     try:
-        from architectures.multimodal.clip import CLIPModel
+        from architectures.multimodal.clip import CLIP, CLIPConfig
 
         print("\n[1/4] Initializing CLIP model...")
-        model = CLIPModel(
+        config = CLIPConfig(
             image_size=224,
             patch_size=16,
-            hidden_size=512,
-            num_heads=8,
-            num_layers=12,
+            vision_width=512,
+            vision_layers=12,
+            vision_heads=8,
             vocab_size=49408,
-            max_text_length=77,
+            context_length=77,
+            text_width=512,
+            text_layers=12,
+            text_heads=8,
+            embed_dim=512
         )
+        model = CLIP(config)
         model.eval()
         print("      ✓ Model initialized")
 
@@ -84,15 +96,20 @@ def example_blip2():
     print("=" * 70)
 
     try:
-        from architectures.multimodal.blip2 import BLIP2
+        from architectures.multimodal.blip2 import BLIP2, BLIP2Config
 
         print("\n[1/4] Initializing BLIP-2 model...")
-        model = BLIP2(
-            vision_model='vit',
+        config = BLIP2Config(
+            vision_encoder="vit_l",
             image_size=224,
-            llm_model='opt-2.7b',
             num_query_tokens=32,
+            qformer_hidden_size=768,
+            qformer_num_layers=12,
+            qformer_num_heads=12,
+            language_model="opt-2.7b",
+            projection_dim=768
         )
+        model = BLIP2(config)
         model.eval()
         print("      ✓ Model initialized")
 

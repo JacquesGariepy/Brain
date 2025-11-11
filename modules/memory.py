@@ -80,11 +80,19 @@ class MemoryModule:
 
     def load_long_term_memory(self):
         """Charge la mémoire à long terme depuis un fichier."""
+        import logging
+        logger = logging.getLogger(__name__)
+
         try:
             with open(self.filename, "r") as f:
                 self.long_term_memory = json.load(f)
         except FileNotFoundError:
             self.long_term_memory = {}
+        except json.JSONDecodeError as e:
+            logger.warning(f"Fichier de mémoire corrompu ({self.filename}): {e}. Initialisation avec mémoire vide.")
+            self.long_term_memory = {}
+            # Sauvegarder un fichier vide valide
+            self.save_long_term_memory()
 
     def synaptic_plasticity(self, synapse):
         """

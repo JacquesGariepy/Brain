@@ -85,7 +85,10 @@ class LearningModule:
 
     def forward_pass(self, inputs: np.ndarray) -> np.ndarray:
         """
-        Propagation avant des entrées à travers le réseau.
+        Propagation avant des entrées à travers le réseau en utilisant les synapses.
+
+        Cette méthode utilise maintenant le réseau complet avec toutes ses synapses
+        pour la propagation, au lieu de bypasser les connexions.
 
         Args:
             inputs: Entrées du réseau
@@ -94,28 +97,33 @@ class LearningModule:
             np.array: Sorties calculées (activations des neurones)
         """
         inputs = np.asarray(inputs)
-        outputs = []
 
         # Réinitialiser tous les neurones
         for neuron in self.network.neurons:
             neuron.reset()
 
-        # Appliquer les entrées aux neurones correspondants
+        # Appliquer les entrées aux neurones d'entrée en tant que courants
+        # Utiliser un courant suffisamment fort pour provoquer des spikes
         num_inputs = min(len(inputs), len(self.network.neurons))
         for i in range(num_inputs):
             neuron = self.network.neurons[i]
-            # Stimuler le neurone avec l'entrée
-            neuron.v_m = neuron.v_rest + inputs[i] * 10.0  # Mise à l'échelle
-            # Vérifier si le neurone spike
-            if neuron.v_m >= neuron.v_threshold:
-                neuron.spike = True
-                neuron.last_spike_time = 0.0
+            # Appliquer l'entrée comme un courant (augmenté pour assurer des spikes)
+            current = inputs[i] * 50.0  # Augmenté de 10.0 à 50.0 pour dépasser le seuil
+            neuron.receive_current(current)
+
+        # Propager à travers le réseau avec ses synapses
+        # Plusieurs pas de temps pour permettre la propagation
+        for _ in range(5):  # 5 pas de temps pour la propagation
+            self.network.update(dt=1.0)
+
+        # Collecter les sorties (états de spike des neurones)
+        outputs = []
+        for i in range(len(self.network.neurons)):
+            if self.network.neurons[i].spike:
                 outputs.append(1.0)
             else:
-                neuron.spike = False
                 outputs.append(0.0)
 
-        # Retourner les sorties correspondant aux inputs fournis (pas de padding)
         return np.array(outputs)
 
     def backward_pass(self, errors: np.ndarray, learning_rate: float):

@@ -115,10 +115,7 @@ class LearningModule:
                 neuron.spike = False
                 outputs.append(0.0)
 
-        # Compléter avec des zéros si nécessaire
-        while len(outputs) < len(self.network.neurons):
-            outputs.append(0.0)
-
+        # Retourner les sorties correspondant aux inputs fournis (pas de padding)
         return np.array(outputs)
 
     def backward_pass(self, errors: np.ndarray, learning_rate: float):

@@ -206,18 +206,26 @@ class Brain:
             inputs: Entrées du réseau
             targets: Sorties attendues
             learning_type: Type d'apprentissage ('supervised', 'unsupervised', 'reinforcement')
+
+        Returns:
+            Pour supervised: erreur moyenne (float)
+            Pour unsupervised: labels des clusters (np.ndarray)
+            Pour reinforcement: None
         """
         if learning_type == 'supervised':
             error = self.learning_module.supervised_learning(inputs, targets)
             logger.info(f"Apprentissage supervisé effectué, erreur={error:.4f}")
+            return error
         elif learning_type == 'unsupervised':
             clusters = self.learning_module.unsupervised_learning(inputs)
             logger.info(f"Apprentissage non supervisé effectué, {len(set(clusters))} clusters")
+            return clusters
         elif learning_type == 'reinforcement':
             # Pour le renforcement, targets contient la récompense
             reward = targets[0] if len(targets) > 0 else 0.0
             self.learning_module.reinforcement_learning(reward)
             logger.info(f"Apprentissage par renforcement effectué, reward={reward:.4f}")
+            return None
 
     def save_state(self):
         """Sauvegarde l'état du cerveau."""

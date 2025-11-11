@@ -46,6 +46,7 @@ logs/
 
 # Data files
 long_term_memory.json
+spam_detector.json
 *.pkl
 *.npy
 *.h5

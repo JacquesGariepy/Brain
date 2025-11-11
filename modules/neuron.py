@@ -34,6 +34,7 @@ class Neuron:
         self.outgoing_synapses = []
         self.last_spike_time = None  # Temps du dernier spike
         self.current_time = 0.0  # Temps courant de la simulation
+        self.input_current = 0.0  # Courant d'entrée externe
 
     def add_incoming_synapse(self, synapse):
         """Ajoute une synapse entrante."""
@@ -58,8 +59,9 @@ class Neuron:
         total_synaptic_current = sum(
             synapse.get_current(self.current_time) for synapse in self.incoming_synapses
         )
-        # Inclure le courant émotionnel et le facteur d'attention
-        total_current = total_synaptic_current + self.emotion_influence
+        # Inclure le courant injecté, émotionnel et le facteur d'attention
+        external_current = getattr(self, 'input_current', 0.0)
+        total_current = total_synaptic_current + external_current + self.emotion_influence
         dv = dt * ((- (self.v_m - self.v_rest) + self.r_m * self.alpha * total_current) / self.tau_m)
         self.v_m += dv
 
@@ -77,3 +79,33 @@ class Neuron:
         self.spike = False
         self.last_spike_time = None
         self.input_current = 0.0
+        self.current_time = 0.0
+
+    def reset_current(self):
+        """Réinitialise seulement le courant d'entrée."""
+        self.input_current = 0.0
+
+    def update_potential(self, input_current, dt):
+        """
+        Met à jour le potentiel membranaire avec un courant d'entrée spécifique.
+
+        Cette méthode est utilisée pour l'apprentissage supervisé où on injecte
+        directement des courants dans les neurones.
+
+        Args:
+            input_current (float): Courant d'entrée à injecter.
+            dt (float): Pas de temps de simulation.
+        """
+        self.current_time += dt
+        # Inclure le courant d'entrée, émotionnel et le facteur d'attention
+        total_current = input_current + self.emotion_influence
+        dv = dt * ((- (self.v_m - self.v_rest) + self.r_m * self.alpha * total_current) / self.tau_m)
+        self.v_m += dv
+
+        # Vérifier si le neurone dépasse le seuil de déclenchement
+        if self.v_m >= self.v_threshold:
+            self.v_m = self.v_reset
+            self.spike = True
+            self.last_spike_time = self.current_time
+        else:
+            self.spike = False

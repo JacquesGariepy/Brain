@@ -3,6 +3,14 @@
 from .interfaces import BrainModule
 
 class PerceptionModule(BrainModule):
+    def __init__(self):
+        self.sensory_buffer = []
+
+    def encode_sensory_input(self, sensory_input):
+        """Encode and store sensory input"""
+        self.sensory_buffer.append(sensory_input)
+        print(f"Sensory input encoded: {sensory_input}")
+
     def process(self, data):
         print("Module de Perception traite les données.")
         # Implémenter la logique de perception ici

@@ -14,51 +14,128 @@ class LearningModule:
         self.network = network
         self.memory = memory_module
 
-    def supervised_learning(self, inputs, targets, learning_rate=0.01):
+    def supervised_learning(self, inputs, targets, learning_rate=0.1):
         """
         Effectue un apprentissage supervisé en ajustant les poids synaptiques en fonction des erreurs.
-        
+
         Args:
-            inputs (array-like): Entrées du réseau.
+            inputs (array-like): Entrées du réseau (peut être un batch ou un seul échantillon).
             targets (array-like): Sorties attendues.
-            learning_rate (float): Taux d'apprentissage.
+            learning_rate (float): Taux d'apprentissage (augmenté à 0.1 pour des changements visibles).
         """
-        outputs = self.forward_pass(inputs)
-        errors = targets - outputs
-        self.backward_pass(errors, learning_rate)
+        inputs = np.array(inputs)
+        targets = np.array(targets)
+
+        # Handle both single samples and batches
+        if inputs.ndim == 1:
+            inputs = inputs.reshape(1, -1)
+        if targets.ndim == 1:
+            targets = targets.reshape(1, -1)
+
+        # Train on each sample in the batch
+        for input_sample, target_sample in zip(inputs, targets):
+            # Forward pass - handles input padding internally
+            outputs = self.forward_pass(input_sample)
+
+            # Ensure target and output shapes match
+            # outputs will always have length = number of neurons
+            num_neurons = len(self.network.neurons)
+            if len(target_sample) < num_neurons:
+                # Pad target with zeros to match output size
+                target_padded = np.zeros(num_neurons)
+                target_padded[:len(target_sample)] = target_sample
+                errors = target_padded - outputs
+            else:
+                # Truncate target to match output size
+                target_truncated = target_sample[:num_neurons]
+                errors = target_truncated - outputs
+
+            self.backward_pass(errors, learning_rate)
 
     def forward_pass(self, inputs):
         """
         Propagation avant des entrées à travers le réseau.
-        
+
         Args:
             inputs (array-like): Entrées du réseau.
-            
+
         Returns:
-            np.array: Sorties calculées.
+            np.array: Sorties calculées (activations continues entre 0 et 1).
         """
         outputs = []
+        # Reset all neurons
         for neuron in self.network.neurons:
             neuron.reset()
+
+        # Process inputs - if we have fewer inputs than neurons, pad with zeros
+        num_neurons = len(self.network.neurons)
+        if len(inputs) < num_neurons:
+            inputs_padded = np.zeros(num_neurons)
+            inputs_padded[:len(inputs)] = inputs
+            inputs = inputs_padded
+
+        # Update all neurons with amplified inputs and collect normalized outputs
         for neuron, input_value in zip(self.network.neurons, inputs):
-            neuron.update_potential(input_value, dt=1.0)
-            outputs.append(neuron.spike)
-        return np.array(outputs)
+            # Amplifier le courant d'entrée pour permettre aux neurones de spiker
+            amplified_input = input_value * 600.0  # Amplification forte pour le modèle LIF
+            neuron.update_potential(amplified_input, dt=1.0)
+
+            # Utiliser l'activité normalisée plutôt que juste le spike
+            # Cela donne une sortie continue entre 0 et 1
+            v_rest = -65.0
+            v_threshold = -50.0
+            normalized_output = (neuron.v_m - v_rest) / (v_threshold - v_rest)
+            normalized_output = np.clip(normalized_output, 0.0, 1.0)
+
+            # Si le neurone a spiké, sortie maximale
+            if neuron.spike:
+                normalized_output = 1.0
+
+            outputs.append(normalized_output)
+
+        return np.array(outputs, dtype=float)
 
     def backward_pass(self, errors, learning_rate):
         """
         Rétropropagation de l'erreur pour ajuster les poids synaptiques.
-        
+
         Args:
             errors (array-like): Erreurs observées entre les sorties réelles et attendues.
             learning_rate (float): Taux d'apprentissage.
         """
         for synapse in self.network.synapses:
-            delta_w = learning_rate * errors[synapse.post_neuron.neuron_id] * synapse.pre_neuron.v_m
+            # Find the index of the post_neuron in the batch
+            try:
+                neuron_index = self.network.neurons.index(synapse.post_neuron)
+                pre_neuron_index = self.network.neurons.index(synapse.pre_neuron)
+
+                # Utiliser l'activité normalisée du neurone pré-synaptique
+                # Normaliser v_m de [-65, -50] vers [0, 1]
+                v_rest = -65.0
+                v_threshold = -50.0
+                normalized_activity = (synapse.pre_neuron.v_m - v_rest) / (v_threshold - v_rest)
+                normalized_activity = np.clip(normalized_activity, 0.0, 1.0)
+
+                # Si le neurone a spiké, utiliser une activité de 1.0
+                if synapse.pre_neuron.spike:
+                    normalized_activity = 1.0
+
+                # Ajouter un biais pour éviter les activités nulles
+                # Cela permet toujours un certain apprentissage même sans spikes
+                normalized_activity = max(normalized_activity, 0.1)
+
+                # Calculer le changement de poids
+                # Aussi utiliser l'erreur du neurone pré-synaptique pour la propagation
+                delta_w = learning_rate * errors[neuron_index] * normalized_activity
+
+            except ValueError:
+                # Fallback: if not found, skip update
+                continue
+
             synapse.weight += delta_w
             synapse.weight = np.clip(synapse.weight, 0.0, 1.0)
 
-        def unsupervised_learning(self, inputs, num_clusters=3):
+    def unsupervised_learning(self, inputs, num_clusters=3):
         """
         Effectue un apprentissage non supervisé basé sur le regroupement des neurones en clusters.
         
@@ -79,48 +156,13 @@ class LearningModule:
                     synapse.weight -= 0.01  # Affaiblir les connexions inter-cluster
                 synapse.weight = np.clip(synapse.weight, 0.0, 1.0)
 
-      import numpy as np
-
-class DecisionModule:
-    """
-    Module de prise de décision basé sur l'accumulation d'évidence jusqu'à un seuil.
-    
-    Attributes:
-        D_t (float): Variable d'accumulation d'évidence.
-        threshold (float): Seuil pour prendre une décision.
-        choice_made (bool): Indique si une décision a été prise.
-        decision (str): Décision finale (positive ou négative).
-    """
-    
-    def __init__(self, threshold=1.0, bias=0.0):
-        self.D_t = 0.0  # Variable d'accumulation d'évidence
-        self.threshold = threshold
-        self.bias = bias
-        self.choice_made = False
-        self.decision = None
-
-    def update_decision(self, evidence, emotion_influence, dt):
-        """
-        Met à jour la variable d'accumulation d'évidence et prend une décision si le seuil est atteint.
-        
-        Args:
-            evidence (float): Évidence accumulée pour la décision.
-            emotion_influence (float): Influence des émotions sur la décision.
-            dt (float): Pas de temps de simulation.
-        """
-        noise = np.random.normal(0, 0.1)
-        dD = dt * (evidence + self.bias + emotion_influence + noise)
-        self.D_t += dD
-        
-        # Vérifier si le seuil de décision est atteint
     def reinforcement_learning(self, reward):
         """
         Effectue un apprentissage par renforcement basé sur les récompenses reçues.
-        
+
         Args:
             reward (float): Récompense reçue pour renforcer ou punir un comportement.
         """
         delta = reward
         for synapse in self.network.synapses:
             synapse.update_weight_rl(delta)
-

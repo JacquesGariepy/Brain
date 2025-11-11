@@ -124,8 +124,11 @@ class Brain:
         for pre_neuron in self.neurons:
             for post_neuron in self.neurons:
                 if pre_neuron != post_neuron:
-                    synapse = Synapse(pre_neuron, post_neuron)
-                    self.synapses.append(synapse)
+                    # Utiliser connect_neurons() qui ajoute la synapse au réseau ET configure les neurones
+                    self.network.connect_neurons(pre_neuron, post_neuron)
+
+        # Synchroniser brain.synapses avec network.synapses
+        self.synapses = self.network.synapses
 
         logger.info(f"{len(self.neurons)} neurones et {len(self.synapses)} synapses créés")
 

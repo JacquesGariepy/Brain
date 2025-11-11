@@ -1,5 +1,20 @@
 import json
+import numpy as np
 from collections import deque
+
+
+class NumpyEncoder(json.JSONEncoder):
+    """Encodeur JSON personnalisé pour gérer les types numpy."""
+    def default(self, obj):
+        if isinstance(obj, (np.integer, np.int32, np.int64)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float32, np.float64)):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, set):
+            return list(obj)
+        return super().default(obj)
 
 class MemoryModule:
     """
@@ -61,7 +76,7 @@ class MemoryModule:
     def save_long_term_memory(self):
         """Sauvegarde la mémoire à long terme sur disque."""
         with open(self.filename, "w") as f:
-            json.dump(self.long_term_memory, f)
+            json.dump(self.long_term_memory, f, cls=NumpyEncoder, indent=2)
 
     def load_long_term_memory(self):
         """Charge la mémoire à long terme depuis un fichier."""

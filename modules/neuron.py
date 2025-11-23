@@ -34,6 +34,7 @@ class Neuron:
         self.outgoing_synapses = []
         self.last_spike_time = None  # Temps du dernier spike
         self.current_time = 0.0  # Temps courant de la simulation
+        self.input_current = 0.0  # Courant d'entrée
 
     def add_incoming_synapse(self, synapse):
         """Ajoute une synapse entrante."""
@@ -45,7 +46,7 @@ class Neuron:
 
     def receive_current(self, syn_current):
         """Reçoit le courant total des synapses entrantes."""
-        self.input_current = syn_current
+        self.input_current += syn_current
 
     def update(self, dt):
         """
@@ -59,7 +60,7 @@ class Neuron:
             synapse.get_current(self.current_time) for synapse in self.incoming_synapses
         )
         # Inclure le courant émotionnel et le facteur d'attention
-        total_current = total_synaptic_current + self.emotion_influence
+        total_current = total_synaptic_current + self.emotion_influence + self.input_current
         dv = dt * ((- (self.v_m - self.v_rest) + self.r_m * self.alpha * total_current) / self.tau_m)
         self.v_m += dv
 
@@ -76,4 +77,8 @@ class Neuron:
         self.v_m = self.v_rest
         self.spike = False
         self.last_spike_time = None
+        self.input_current = 0.0
+
+    def reset_current(self):
+        """Réinitialise le courant d'entrée pour le prochain pas de temps."""
         self.input_current = 0.0

@@ -1,0 +1,26 @@
+# Include production requirements
+-r requirements.txt
+
+# Development tools
+ipython>=8.0.0
+jupyter>=1.0.0
+notebook>=6.5.0
+
+# Debugging
+ipdb>=0.13.0
+pdbpp>=0.10.0
+
+# Testing extras
+pytest-xdist>=3.0.0
+pytest-timeout>=2.1.0
+hypothesis>=6.0.0
+
+# Code quality extras
+isort>=5.11.0
+autopep8>=2.0.0
+bandit>=1.7.0
+
+# Performance profiling
+memory-profiler>=0.61.0
+line-profiler>=4.0.0
+py-spy>=0.3.0
